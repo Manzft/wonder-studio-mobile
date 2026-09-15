@@ -18,9 +18,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -38,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.manzft.wonderstudio.ui.icons.WonderIcons
 import com.manzft.wonderstudio.data.RecentProject
 import com.manzft.wonderstudio.model.Defaults
 import com.manzft.wonderstudio.ui.EditorViewModel
@@ -115,7 +113,7 @@ fun ProjectsScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 					onClick = { pendingAction = PendingAction.OPEN; folderPicker.launch(null) },
 					modifier = Modifier.weight(1f),
 				) {
-					Icon(Icons.Default.FolderOpen, contentDescription = null)
+					Icon(WonderIcons.FolderOpen, contentDescription = null)
 					Text("Open", modifier = Modifier.padding(start = 6.dp), maxLines = 1)
 				}
 			}
@@ -123,7 +121,7 @@ fun ProjectsScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 				onClick = { pendingAction = PendingAction.IMPORT_MOD; folderPicker.launch(null) },
 				modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
 			) {
-				Icon(Icons.Default.Extension, contentDescription = null)
+				Icon(WonderIcons.Extension, contentDescription = null)
 				Text("Import mod", modifier = Modifier.padding(start = 6.dp))
 			}
 
@@ -196,7 +194,7 @@ private fun RecentRow(recent: RecentProject, onOpen: () -> Unit, onRemove: () ->
 			.clickable(onClick = onOpen)
 			.padding(vertical = 6.dp),
 	) {
-		Icon(Icons.Default.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+		Icon(WonderIcons.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
 		Column(Modifier.weight(1f).padding(start = 12.dp)) {
 			Text(recent.name, style = MaterialTheme.typography.bodyLarge)
 			Text(recent.uri, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
