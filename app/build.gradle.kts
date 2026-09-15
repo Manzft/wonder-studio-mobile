@@ -37,6 +37,13 @@ android {
 	}
 
 	buildTypes {
+		debug {
+			// Firmar el debug con la misma clave que release: permite
+			// `adb install -r` sobre cualquiera de las dos builds (iterar rápido).
+			if (keystoreProperties.getProperty("storeFile") != null) {
+				signingConfig = signingConfigs.getByName("release")
+			}
+		}
 		release {
 			isMinifyEnabled = true
 			isShrinkResources = true
@@ -68,6 +75,12 @@ android {
 			excludes += "/META-INF/{AL2.0,LGPL2.1}"
 		}
 	}
+
+	// Lint pesado: se desactiva en release (no afecta al APK)
+	lint {
+		checkReleaseBuilds = false
+		abortOnError = false
+	}
 }
 
 dependencies {
@@ -80,6 +93,7 @@ dependencies {
 	implementation(libs.androidx.ui.graphics)
 	implementation(libs.androidx.ui.tooling.preview)
 	implementation(libs.androidx.material3)
+	implementation(libs.androidx.material.icons.core)
 	implementation(libs.androidx.documentfile)
 	implementation(libs.kotlinx.serialization.json)
 	debugImplementation(libs.androidx.ui.tooling)

@@ -1,5 +1,6 @@
 package com.manzft.wonderstudio.ui.canvas
 
+import com.manzft.wonderstudio.ui.icons.WonderIcons
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -14,8 +15,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -226,17 +230,36 @@ fun SceneCanvas(
 		Column(
 			modifier = Modifier
 				.align(Alignment.BottomEnd)
-				.padding(10.dp),
-			verticalArrangement = Arrangement.spacedBy(6.dp),
+				.padding(12.dp),
+			verticalArrangement = Arrangement.spacedBy(8.dp),
 			horizontalAlignment = Alignment.End,
 		) {
-			Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-				Button(onClick = { mode = if (mode == CanvasMode.MOVE) CanvasMode.PAN else CanvasMode.MOVE }) {
-					Text(if (mode == CanvasMode.MOVE) "Move" else "Pan")
+			Surface(
+				color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+				shape = RoundedCornerShape(10.dp),
+			) {
+				Text(
+					"${(scale * 100).toInt()}% · ${if (mode == CanvasMode.MOVE) "Move" else "Pan"}",
+					style = MaterialTheme.typography.labelSmall,
+					modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+				)
+			}
+			Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+				FilledTonalIconButton(onClick = { mode = if (mode == CanvasMode.MOVE) CanvasMode.PAN else CanvasMode.MOVE }) {
+					Icon(
+						if (mode == CanvasMode.MOVE) WonderIcons.OpenWith else WonderIcons.PanTool,
+						contentDescription = if (mode == CanvasMode.MOVE) "Move mode" else "Pan mode",
+					)
 				}
-				Button(onClick = { scale = (scale * 1.25f).coerceAtMost(MAX_SCALE) }) { Text("+") }
-				Button(onClick = { scale = (scale / 1.25f).coerceAtLeast(MIN_SCALE) }) { Text("-") }
-				Button(onClick = { scale = 1f; offset = Offset.Zero }) { Text("Reset") }
+				FilledTonalIconButton(onClick = { scale = (scale * 1.25f).coerceAtMost(MAX_SCALE) }) {
+					Icon(WonderIcons.ZoomIn, contentDescription = "Zoom in")
+				}
+				FilledTonalIconButton(onClick = { scale = (scale / 1.25f).coerceAtLeast(MIN_SCALE) }) {
+					Icon(WonderIcons.ZoomOut, contentDescription = "Zoom out")
+				}
+				FilledTonalIconButton(onClick = { scale = 1f; offset = Offset.Zero }) {
+					Icon(WonderIcons.CenterFocusStrong, contentDescription = "Reset view")
+				}
 			}
 		}
 	}

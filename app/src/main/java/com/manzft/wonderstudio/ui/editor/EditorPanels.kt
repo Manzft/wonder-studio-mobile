@@ -1,5 +1,6 @@
 package com.manzft.wonderstudio.ui.editor
 
+import com.manzft.wonderstudio.ui.icons.WonderIcons
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -16,8 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,17 +37,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.documentfile.provider.DocumentFile
 import com.manzft.wonderstudio.data.AssetRepository
 import com.manzft.wonderstudio.model.Animation
 import com.manzft.wonderstudio.model.Component
 import com.manzft.wonderstudio.model.Defaults
-import com.manzft.wonderstudio.model.Setting
 import com.manzft.wonderstudio.model.int
 import com.manzft.wonderstudio.model.string
 import com.manzft.wonderstudio.ui.EditorViewModel
@@ -50,6 +52,7 @@ import com.manzft.wonderstudio.ui.RootSelection
 import com.manzft.wonderstudio.ui.common.AssetBrowser
 import com.manzft.wonderstudio.ui.common.ConfirmDialog
 import com.manzft.wonderstudio.ui.common.FieldsDialog
+import com.manzft.wonderstudio.ui.common.ItemMenu
 import com.manzft.wonderstudio.ui.common.OptionPickerDialog
 import com.manzft.wonderstudio.ui.common.PropertyEditor
 import com.manzft.wonderstudio.ui.inspector.PropertySpecs
@@ -58,7 +61,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 // ---------------------------------------------------------------------------
-// Jerarquía de componentes
+// Component hierarchy
 // ---------------------------------------------------------------------------
 
 @Composable
@@ -69,12 +72,10 @@ fun HierarchyPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 	@Suppress("UNUSED_VARIABLE")
 	val revision = vm.revision
 	val element = vm.currentElement
-	val selected = vm.selectedComponent
-	val index = selected?.let { element?.components?.indexOf(it) } ?: -1
 
 	Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(12.dp)) {
 		if (element == null) {
-			Text("Open a theme, character or object first.")
+			EmptyRow("Open a theme, character or object first.")
 			return@Column
 		}
 
@@ -85,17 +86,21 @@ fun HierarchyPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 				.background(
 					if (vm.selectedRoot == RootSelection.ELEMENT) MaterialTheme.colorScheme.surfaceVariant
 					else MaterialTheme.colorScheme.surface,
-					RoundedCornerShape(6.dp),
+					RoundedCornerShape(8.dp),
 				)
 				.clickable { vm.selectElementRoot() }
-				.padding(10.dp),
+				.padding(12.dp),
 		) {
-			Text("[${vm.currentElementType?.singular ?: ""}] ", color = MaterialTheme.colorScheme.tertiary)
-			Text(element.name, style = MaterialTheme.typography.titleSmall)
+			Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+			Text(
+				"[${vm.currentElementType?.singular ?: ""}] ${element.name}",
+				style = MaterialTheme.typography.titleSmall,
+				modifier = Modifier.padding(start = 8.dp),
+			)
 		}
 
 		element.components.forEachIndexed { i, component ->
-			val isSelected = component === selected
+			val isSelected = component === vm.selectedComponent
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
 				modifier = Modifier
@@ -103,30 +108,35 @@ fun HierarchyPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 					.background(
 						if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
 						else MaterialTheme.colorScheme.surface,
-						RoundedCornerShape(6.dp),
+						RoundedCornerShape(8.dp),
 					)
 					.clickable { vm.selectComponent(component.name) }
-					.padding(horizontal = 10.dp, vertical = 8.dp),
+					.padding(start = 12.dp),
 			) {
-				Text("${i + 1}. ", style = MaterialTheme.typography.labelSmall)
-				Text(component.name, modifier = Modifier.weight(1f))
-				Text(component.type, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+				Text("${i + 1}.", style = MaterialTheme.typography.labelSmall)
+				Column(Modifier.weight(1f).padding(start = 8.dp)) {
+					Text(component.name)
+					Text(
+						component.type,
+						style = MaterialTheme.typography.labelSmall,
+						color = MaterialTheme.colorScheme.onSurfaceVariant,
+					)
+				}
+				ItemMenu(
+					canMoveUp = i > 0,
+					canMoveDown = i < element.components.size - 1,
+					onRename = { renameTarget = component },
+					onDuplicate = { vm.duplicateComponent(component) },
+					onMoveUp = { vm.moveComponent(i, -1) },
+					onMoveDown = { vm.moveComponent(i, 1) },
+					onRemove = { removeTarget = component },
+				)
 			}
 		}
 
-		Row(
-			horizontalArrangement = Arrangement.spacedBy(4.dp),
-			modifier = Modifier
-				.fillMaxWidth()
-				.horizontalScroll(rememberScrollState())
-				.padding(top = 10.dp),
-		) {
-			Button(onClick = { showAdd = true }) { Text("Add") }
-			Button(enabled = selected != null, onClick = { selected?.let(vm::duplicateComponent) }) { Text("Dup") }
-			Button(enabled = selected != null, onClick = { renameTarget = selected }) { Text("Rename") }
-			Button(enabled = selected != null, onClick = { removeTarget = selected }) { Text("Remove") }
-			Button(enabled = index > 0, onClick = { vm.moveComponent(index, -1) }) { Text("Up") }
-			Button(enabled = index >= 0 && index < element.components.size - 1, onClick = { vm.moveComponent(index, 1) }) { Text("Down") }
+		TextButton(onClick = { showAdd = true }, modifier = Modifier.padding(top = 6.dp)) {
+			Icon(Icons.Default.Add, contentDescription = null)
+			Text("Add component", modifier = Modifier.padding(start = 6.dp))
 		}
 	}
 
@@ -171,7 +181,7 @@ fun HierarchyPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 }
 
 // ---------------------------------------------------------------------------
-// Inspector de propiedades
+// Inspector
 // ---------------------------------------------------------------------------
 
 @Composable
@@ -221,13 +231,13 @@ fun InspectorPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 				)
 			}
 
-			else -> Text("Select a component or the root to edit its properties.")
+			else -> EmptyRow("Select a component or the root to edit its properties.")
 		}
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Animaciones
+// Animations
 // ---------------------------------------------------------------------------
 
 @Composable
@@ -237,7 +247,7 @@ fun AnimationsPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 	val component = vm.selectedComponent
 	Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(12.dp)) {
 		if (component == null || component.type != "animated_sprite") {
-			Text("Select an animated_sprite component to manage its animations.")
+			EmptyRow("Select an animated_sprite component to manage its animations.")
 			return@Column
 		}
 
@@ -245,40 +255,40 @@ fun AnimationsPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 		var renameTarget by remember { mutableStateOf<Animation?>(null) }
 		var removeTarget by remember { mutableStateOf<Animation?>(null) }
 		val animation = component.animation(component.current_animation) ?: component.animations.firstOrNull()
-		val index = animation?.let { component.animations.indexOf(it) } ?: -1
 
-		Row(
-			horizontalArrangement = Arrangement.spacedBy(6.dp),
-			modifier = Modifier
-				.fillMaxWidth()
-				.horizontalScroll(rememberScrollState()),
-		) {
-			component.animations.forEach { item ->
-				FilterChip(
-					selected = animation === item,
-					onClick = { vm.setCurrentAnimation(component, item.name) },
-					label = { Text(item.name) },
+		component.animations.forEachIndexed { index, item ->
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(
+						if (animation === item) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+						else MaterialTheme.colorScheme.surface,
+						RoundedCornerShape(8.dp),
+					)
+					.clickable { vm.setCurrentAnimation(component, item.name) }
+					.padding(start = 12.dp),
+			) {
+				Text(item.name, modifier = Modifier.weight(1f))
+				ItemMenu(
+					canMoveUp = index > 0,
+					canMoveDown = index < component.animations.size - 1,
+					onRename = { renameTarget = item },
+					onDuplicate = { vm.duplicateAnimation(component, item) },
+					onMoveUp = { vm.moveAnimation(component, index, -1) },
+					onMoveDown = { vm.moveAnimation(component, index, 1) },
+					onRemove = { removeTarget = item },
 				)
 			}
 		}
 
-		Row(
-			horizontalArrangement = Arrangement.spacedBy(4.dp),
-			modifier = Modifier
-				.fillMaxWidth()
-				.horizontalScroll(rememberScrollState())
-				.padding(vertical = 8.dp),
-		) {
-			Button(onClick = { showAdd = true }) { Text("Add") }
-			Button(enabled = animation != null, onClick = { animation?.let { vm.duplicateAnimation(component, it) } }) { Text("Dup") }
-			Button(enabled = animation != null, onClick = { renameTarget = animation }) { Text("Rename") }
-			Button(enabled = animation != null, onClick = { removeTarget = animation }) { Text("Remove") }
-			Button(enabled = index > 0, onClick = { vm.moveAnimation(component, index, -1) }) { Text("Up") }
-			Button(enabled = index >= 0 && index < component.animations.size - 1, onClick = { vm.moveAnimation(component, index, 1) }) { Text("Down") }
+		TextButton(onClick = { showAdd = true }, modifier = Modifier.padding(top = 6.dp)) {
+			Icon(Icons.Default.Add, contentDescription = null)
+			Text("Add animation", modifier = Modifier.padding(start = 6.dp))
 		}
 
 		if (animation == null) {
-			Text("This component has no animations yet.")
+			Text("This component has no animations yet.", modifier = Modifier.padding(top = 8.dp))
 		} else {
 			AnimationPreview(vm, animation)
 			PropertyEditor(
@@ -362,6 +372,7 @@ private fun AnimationPreview(vm: EditorViewModel, animation: Animation) {
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(160.dp)
+				.padding(top = 10.dp)
 				.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
 			contentAlignment = Alignment.Center,
 		) {
@@ -399,12 +410,21 @@ private fun AnimationPreview(vm: EditorViewModel, animation: Animation) {
 			Button(onClick = {
 				frame = start
 				playing = true
-			}) { Text("Play") }
-			Button(onClick = { playing = false }) { Text("Pause") }
+			}) {
+				Icon(Icons.Default.PlayArrow, contentDescription = null)
+				Text("Play", modifier = Modifier.padding(start = 6.dp))
+			}
+			Button(onClick = { playing = false }) {
+				Icon(WonderIcons.Pause, contentDescription = null)
+				Text("Pause", modifier = Modifier.padding(start = 6.dp))
+			}
 			Button(onClick = {
 				playing = false
 				frame = animation.settings.int("frame", 0).coerceIn(0, total - 1)
-			}) { Text("Stop") }
+			}) {
+				Icon(WonderIcons.Stop, contentDescription = null)
+				Text("Stop", modifier = Modifier.padding(start = 6.dp))
+			}
 			Text("Frame $frame / $end", style = MaterialTheme.typography.labelSmall)
 		}
 	}
@@ -421,8 +441,20 @@ fun FilesPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 			repository = vm.repository,
 			assets = vm.assets,
 			onPlaySound = { vm.playSound(it) },
-			onPick = { /* solo previsualización */ },
+			onPick = { /* preview only */ },
 			modifier = Modifier.fillMaxWidth(),
 		)
+	}
+}
+
+@Composable
+private fun EmptyRow(text: String) {
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(10.dp),
+		modifier = Modifier.fillMaxWidth().padding(12.dp),
+	) {
+		Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+		Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
 	}
 }

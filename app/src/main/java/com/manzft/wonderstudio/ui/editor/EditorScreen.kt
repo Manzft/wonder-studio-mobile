@@ -1,5 +1,6 @@
 package com.manzft.wonderstudio.ui.editor
 
+import com.manzft.wonderstudio.ui.icons.WonderIcons
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,15 +19,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -39,7 +40,6 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -56,26 +56,26 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.manzft.wonderstudio.model.Element
 import com.manzft.wonderstudio.model.ElementType
 import com.manzft.wonderstudio.model.elements
 import com.manzft.wonderstudio.ui.EditorViewModel
-import com.manzft.wonderstudio.ui.RootSelection
 import com.manzft.wonderstudio.ui.canvas.SceneCanvas
 import com.manzft.wonderstudio.ui.common.ConfirmDialog
+import com.manzft.wonderstudio.ui.common.ItemMenu
 import com.manzft.wonderstudio.ui.common.FieldsDialog
-import com.manzft.wonderstudio.ui.inspector.PropertySpecs
 import kotlinx.coroutines.launch
 
-private enum class EditorTab(val label: String) {
-	SCENE("Scene"),
-	TREE("Tree"),
-	INSPECTOR("Inspector"),
-	ANIMS("Anims"),
-	CODE("Code"),
-	FILES("Files"),
+private enum class EditorTab(val label: String, val icon: ImageVector) {
+	SCENE("Scene", WonderIcons.Image),
+	TREE("Tree", WonderIcons.AccountTree),
+	INSPECTOR("Inspector", WonderIcons.Tune),
+	ANIMS("Anims", WonderIcons.Animation),
+	CODE("Code", WonderIcons.Code),
+	FILES("Files", WonderIcons.Folder),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,17 +127,17 @@ fun EditorScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 					title = { Text(vm.project?.project_name ?: "Wonder Studio") },
 					navigationIcon = {
 						IconButton(onClick = { scope.launch { drawerState.open() } }) {
-							Icon(Icons.Default.List, contentDescription = "Project")
+							Icon(Icons.Default.Menu, contentDescription = "Project panel")
 						}
 					},
 					actions = {
 						IconButton(onClick = { vm.save() }) {
-							Icon(Icons.Default.Refresh, contentDescription = "Save")
+							Icon(WonderIcons.Save, contentDescription = "Save")
 						}
 						IconButton(onClick = { if (vm.running) vm.stopTest() else vm.launchTest() }) {
 							Icon(
-								Icons.Default.PlayArrow,
-								contentDescription = "Run",
+								if (vm.running) WonderIcons.Stop else Icons.Default.PlayArrow,
+								contentDescription = if (vm.running) "Stop" else "Run",
 								tint = if (vm.running) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
 							)
 						}
@@ -145,9 +145,21 @@ fun EditorScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 							Icon(Icons.Default.MoreVert, contentDescription = "More")
 						}
 						DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-							DropdownMenuItem(text = { Text("Export mod") }, onClick = { menuOpen = false; showExport = true })
-							DropdownMenuItem(text = { Text("Logs") }, onClick = { menuOpen = false; showLogs = true })
-							DropdownMenuItem(text = { Text("Close project") }, onClick = { menuOpen = false; vm.closeProject() })
+							DropdownMenuItem(
+								text = { Text("Export mod") },
+								leadingIcon = { Icon(WonderIcons.Upload, contentDescription = null) },
+								onClick = { menuOpen = false; showExport = true },
+							)
+							DropdownMenuItem(
+								text = { Text("Output logs") },
+								leadingIcon = { Icon(WonderIcons.Terminal, contentDescription = null) },
+								onClick = { menuOpen = false; showLogs = true },
+							)
+							DropdownMenuItem(
+								text = { Text("Close project") },
+								leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+								onClick = { menuOpen = false; vm.closeProject() },
+							)
 						}
 					},
 				)
@@ -159,7 +171,7 @@ fun EditorScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 						NavigationBarItem(
 							selected = tab == item,
 							onClick = { tab = item },
-							icon = { Text(item.label.take(1)) },
+							icon = { Icon(item.icon, contentDescription = item.label) },
 							label = { Text(item.label) },
 						)
 					}
@@ -170,10 +182,7 @@ fun EditorScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 				when (tab) {
 					EditorTab.SCENE -> {
 						if (vm.currentElement == null) {
-							Text(
-								"Abrí un tema, personaje u objeto desde el panel de proyecto (arriba a la izquierda).",
-								modifier = Modifier.padding(16.dp),
-							)
+							EmptyHint("Open a theme, character or object from the project panel (top-left).")
 						} else {
 							SceneCanvas(
 								element = vm.currentElement,
@@ -193,7 +202,7 @@ fun EditorScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 					EditorTab.CODE -> {
 						val element = vm.currentElement
 						if (element?.script == null) {
-							Text("Los temas no tienen script. Abrí un personaje u objeto.", modifier = Modifier.padding(16.dp))
+							EmptyHint("Themes have no script. Open a character or object.")
 						} else {
 							WonderScriptEditor(
 								initialText = element.script ?: "",
@@ -222,8 +231,20 @@ fun EditorScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 	}
 }
 
+@Composable
+private fun EmptyHint(text: String) {
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(10.dp),
+		modifier = Modifier.fillMaxWidth().padding(24.dp),
+	) {
+		Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+		Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
+	}
+}
+
 // ---------------------------------------------------------------------------
-// Panel de proyecto (drawer)
+// Project panel (drawer)
 // ---------------------------------------------------------------------------
 
 @Composable
@@ -236,6 +257,7 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 	var styleRemove by remember { mutableStateOf<String?>(null) }
 	val selectedStyle = vm.currentStyleName
 	val style = vm.currentStyle
+
 	Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
 		Text(project?.project_name ?: "", style = MaterialTheme.typography.titleLarge)
 		Text(
@@ -244,32 +266,39 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 		)
 		if (vm.modLoaded) {
-			Text("Mod importado (no se guarda)", color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.labelSmall)
+			Text("Mod imported (saving disabled)", color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.labelSmall)
 		}
 
 		SectionHeader("Styles")
-		vm.project?.styles?.forEachIndexed { index, style ->
-			val isCurrent = style.name == selectedStyle
+		project?.styles?.forEachIndexed { index, current ->
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
 				modifier = Modifier
 					.fillMaxWidth()
 					.background(
-						if (isCurrent) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
-						RoundedCornerShape(6.dp),
+						if (current.name == selectedStyle) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+						else MaterialTheme.colorScheme.surface,
+						RoundedCornerShape(8.dp),
 					)
-					.clickable { vm.selectStyle(style.name); onAction() }
-					.padding(horizontal = 8.dp, vertical = 6.dp),
+					.clickable { vm.selectStyle(current.name); onAction() }
+					.padding(start = 12.dp),
 			) {
-				Text(style.name, modifier = Modifier.weight(1f))
-				TextButton(onClick = { vm.moveStyle(index, -1) }) { Text("↑") }
-				TextButton(onClick = { vm.moveStyle(index, 1) }) { Text("↓") }
-				IconButton(onClick = { vm.duplicateStyle(style) }) { Icon(Icons.Default.Add, contentDescription = "Duplicate") }
-				IconButton(onClick = { styleRename = style.name }) { Icon(Icons.Default.Edit, contentDescription = "Rename") }
-				IconButton(onClick = { styleRemove = style.name }) { Icon(Icons.Default.Delete, contentDescription = "Remove") }
+				Text(current.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+				ItemMenu(
+					canMoveUp = index > 0,
+					canMoveDown = index < project.styles.size - 1,
+					onRename = { styleRename = current.name },
+					onDuplicate = { vm.duplicateStyle(current) },
+					onMoveUp = { vm.moveStyle(index, -1) },
+					onMoveDown = { vm.moveStyle(index, 1) },
+					onRemove = { styleRemove = current.name },
+				)
 			}
 		}
-		TextButton(onClick = { showStyleAdd = true }) { Text("+ Add style") }
+		TextButton(onClick = { showStyleAdd = true }, modifier = Modifier.padding(top = 4.dp)) {
+			Icon(Icons.Default.Add, contentDescription = null)
+			Text("Add style", modifier = Modifier.padding(start = 6.dp))
+		}
 
 		if (style != null) {
 			SectionHeader("Elements")
@@ -300,30 +329,30 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 		)
 	}
 	styleRename?.let { name ->
-		val style = vm.project?.styles?.firstOrNull { it.name == name }
-		if (style != null) {
+		val target = vm.project?.styles?.firstOrNull { it.name == name }
+		if (target != null) {
 			FieldsDialog(
 				title = "Rename style",
 				message = "Fill the style info",
 				labels = listOf("Style name"),
-				initial = listOf(style.name),
+				initial = listOf(target.name),
 				onDismiss = { styleRename = null },
 				onConfirm = { values ->
-					vm.renameStyle(style, values.firstOrNull().orEmpty())
+					vm.renameStyle(target, values.firstOrNull().orEmpty())
 					styleRename = null
 				},
 			)
 		}
 	}
 	styleRemove?.let { name ->
-		val style = vm.project?.styles?.firstOrNull { it.name == name }
-		if (style != null) {
+		val target = vm.project?.styles?.firstOrNull { it.name == name }
+		if (target != null) {
 			ConfirmDialog(
-				title = "Remove a style",
-				message = "Are you sure you want to remove the ${style.name} style? You can't undo this action.",
+				title = "Remove style",
+				message = "Remove \"${target.name}\"? This can't be undone.",
 				onDismiss = { styleRemove = null },
 				onConfirm = {
-					vm.removeStyle(style)
+					vm.removeStyle(target)
 					styleRemove = null
 				},
 			)
@@ -340,27 +369,34 @@ private fun ElementList(vm: EditorViewModel, type: ElementType, onAction: () -> 
 
 	Column {
 		elements.forEachIndexed { index, element ->
-			val isCurrent = vm.currentElement === element
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
 				modifier = Modifier
 					.fillMaxWidth()
 					.background(
-						if (isCurrent) MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
-						RoundedCornerShape(6.dp),
+						if (vm.currentElement === element) MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
+						else MaterialTheme.colorScheme.surface,
+						RoundedCornerShape(8.dp),
 					)
 					.clickable { vm.openElement(type, element.name); onAction() }
-					.padding(horizontal = 8.dp, vertical = 4.dp),
+					.padding(start = 12.dp),
 			) {
 				Text(element.name, modifier = Modifier.weight(1f))
-				TextButton(onClick = { vm.moveElement(type, index, -1) }) { Text("↑") }
-				TextButton(onClick = { vm.moveElement(type, index, 1) }) { Text("↓") }
-				IconButton(onClick = { vm.duplicateElement(type, element) }) { Icon(Icons.Default.Add, contentDescription = "Duplicate") }
-				IconButton(onClick = { renameTarget = element }) { Icon(Icons.Default.Edit, contentDescription = "Rename") }
-				IconButton(onClick = { removeTarget = element }) { Icon(Icons.Default.Delete, contentDescription = "Remove") }
+				ItemMenu(
+					canMoveUp = index > 0,
+					canMoveDown = index < elements.size - 1,
+					onRename = { renameTarget = element },
+					onDuplicate = { vm.duplicateElement(type, element) },
+					onMoveUp = { vm.moveElement(type, index, -1) },
+					onMoveDown = { vm.moveElement(type, index, 1) },
+					onRemove = { removeTarget = element },
+				)
 			}
 		}
-		TextButton(onClick = { showAdd = true }) { Text("+ Add ${type.singular}") }
+		TextButton(onClick = { showAdd = true }, modifier = Modifier.padding(top = 4.dp)) {
+			Icon(Icons.Default.Add, contentDescription = null)
+			Text("Add ${type.singular}", modifier = Modifier.padding(start = 6.dp))
+		}
 	}
 
 	if (showAdd) {
@@ -391,8 +427,8 @@ private fun ElementList(vm: EditorViewModel, type: ElementType, onAction: () -> 
 	}
 	removeTarget?.let { element ->
 		ConfirmDialog(
-			title = "Remove a ${type.singular}",
-			message = "Are you sure you want to remove ${element.name}? You can't undo this action.",
+			title = "Remove ${type.singular}",
+			message = "Remove \"${element.name}\"? This can't be undone.",
 			onDismiss = { removeTarget = null },
 			onConfirm = {
 				vm.removeElement(type, element)
@@ -408,7 +444,7 @@ private fun SectionHeader(text: String) {
 		text,
 		style = MaterialTheme.typography.titleMedium,
 		color = MaterialTheme.colorScheme.tertiary,
-		modifier = Modifier.padding(top = 16.dp, bottom = 6.dp),
+		modifier = Modifier.padding(top = 18.dp, bottom = 4.dp),
 	)
 }
 
@@ -426,7 +462,7 @@ private fun ExportDialog(vm: EditorViewModel, onDismiss: () -> Unit, onExport: (
 			Column(Modifier.height(420.dp).verticalScroll(rememberScrollState())) {
 				Row(verticalAlignment = Alignment.CenterVertically) {
 					Switch(checked = vm.exportEverything, onCheckedChange = { vm.exportEverything = it })
-					Text("Export all", modifier = Modifier.padding(start = 8.dp))
+					Text("Export everything", modifier = Modifier.padding(start = 8.dp))
 				}
 				if (!vm.exportEverything) {
 					project?.styles?.forEach { style ->
@@ -453,7 +489,12 @@ private fun ExportDialog(vm: EditorViewModel, onDismiss: () -> Unit, onExport: (
 				}
 			}
 		},
-		confirmButton = { TextButton(onClick = onExport) { Text("Choose folder & export") } },
+		confirmButton = {
+			TextButton(onClick = onExport) {
+				Icon(WonderIcons.Upload, contentDescription = null)
+				Text("Export", modifier = Modifier.padding(start = 6.dp))
+			}
+		},
 		dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
 	)
 }
@@ -466,13 +507,23 @@ private fun LogsDialog(vm: EditorViewModel, onDismiss: () -> Unit) {
 		text = {
 			Column(Modifier.height(360.dp).verticalScroll(rememberScrollState())) {
 				if (vm.logs.isEmpty()) {
-					Text("Sin logs todavía. Corré el test con el botón Play.")
+					Text("No logs yet. Run the test with the play button.")
 				} else {
 					vm.logs.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
 				}
 			}
 		},
-		confirmButton = { TextButton(onClick = { vm.clearLogs() }) { Text("Clear") } },
-		dismissButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+		confirmButton = {
+			TextButton(onClick = { vm.clearLogs() }) {
+				Icon(Icons.Default.Delete, contentDescription = null)
+				Text("Clear", modifier = Modifier.padding(start = 6.dp))
+			}
+		},
+		dismissButton = {
+			TextButton(onClick = onDismiss) {
+				Icon(Icons.Default.Check, contentDescription = null)
+				Text("Close", modifier = Modifier.padding(start = 6.dp))
+			}
+		},
 	)
 }

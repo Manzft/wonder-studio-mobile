@@ -6,7 +6,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,9 +53,17 @@ fun FieldsDialog(
 			}
 		},
 		confirmButton = {
-			TextButton(onClick = { onConfirm(values.toList()) }) { Text("OK") }
+			TextButton(onClick = { onConfirm(values.toList()) }) {
+				Icon(Icons.Default.Check, contentDescription = null)
+				Text("OK", modifier = Modifier.padding(start = 6.dp))
+			}
 		},
-		dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+		dismissButton = {
+			TextButton(onClick = onDismiss) {
+				Icon(Icons.Default.Close, contentDescription = null)
+				Text("Cancel", modifier = Modifier.padding(start = 6.dp))
+			}
+		},
 	)
 }
 
@@ -66,8 +78,18 @@ fun ConfirmDialog(
 		onDismissRequest = onDismiss,
 		title = { Text(title) },
 		text = { Text(message) },
-		confirmButton = { TextButton(onClick = onConfirm) { Text("OK") } },
-		dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+		confirmButton = {
+			TextButton(onClick = onConfirm) {
+				Icon(Icons.Default.Check, contentDescription = null)
+				Text("OK", modifier = Modifier.padding(start = 6.dp))
+			}
+		},
+		dismissButton = {
+			TextButton(onClick = onDismiss) {
+				Icon(Icons.Default.Close, contentDescription = null)
+				Text("Cancel", modifier = Modifier.padding(start = 6.dp))
+			}
+		},
 	)
 }
 
@@ -95,7 +117,12 @@ fun OptionPickerDialog(
 			}
 		},
 		confirmButton = {},
-		dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+		dismissButton = {
+			TextButton(onClick = onDismiss) {
+				Icon(Icons.Default.Close, contentDescription = null)
+				Text("Cancel", modifier = Modifier.padding(start = 6.dp))
+			}
+		},
 	)
 }
 
@@ -124,6 +151,11 @@ fun AssetPickerDialog(
 			)
 		},
 		confirmButton = {},
-		dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+		dismissButton = {
+			TextButton(onClick = onDismiss) {
+				Icon(Icons.Default.Close, contentDescription = null)
+				Text("Cancel", modifier = Modifier.padding(start = 6.dp))
+			}
+		},
 	)
 }

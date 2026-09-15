@@ -36,7 +36,7 @@ class UdpLogReceiver(private val onLine: (String) -> Unit) {
 					}
 				}
 			} catch (_: Exception) {
-				if (running) onLine("No se pudo escuchar los logs en el puerto $port")
+				if (running) onLine("Couldn't listen for logs on port $port")
 			}
 		}
 	}

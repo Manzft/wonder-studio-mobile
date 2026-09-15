@@ -1,5 +1,6 @@
 package com.manzft.wonderstudio.ui.projects
 
+import com.manzft.wonderstudio.ui.icons.WonderIcons
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,7 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -63,16 +70,34 @@ fun ProjectsScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 	Column(modifier = modifier.padding(20.dp)) {
 		Text("Wonder Studio", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
 		Text(
-			"Crea proyectos para Wonder Maker desde el celular.",
+			"Create Wonder Maker projects right from your phone.",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 			modifier = Modifier.padding(bottom = 16.dp),
 		)
 
 		Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-			Button(onClick = { pendingAction = PendingAction.NEW; folderPicker.launch(null) }) { Text("New") }
-			Button(onClick = { pendingAction = PendingAction.OPEN; folderPicker.launch(null) }) { Text("Open") }
-			OutlinedButton(onClick = { pendingAction = PendingAction.IMPORT_MOD; folderPicker.launch(null) }) { Text("Open mod") }
+			Button(
+				onClick = { pendingAction = PendingAction.NEW; folderPicker.launch(null) },
+				modifier = Modifier.weight(1f),
+			) {
+				Icon(Icons.Default.Add, contentDescription = null)
+				Text("New", modifier = Modifier.padding(start = 6.dp), maxLines = 1)
+			}
+			Button(
+				onClick = { pendingAction = PendingAction.OPEN; folderPicker.launch(null) },
+				modifier = Modifier.weight(1f),
+			) {
+				Icon(WonderIcons.FolderOpen, contentDescription = null)
+				Text("Open", modifier = Modifier.padding(start = 6.dp), maxLines = 1)
+			}
+		}
+		OutlinedButton(
+			onClick = { pendingAction = PendingAction.IMPORT_MOD; folderPicker.launch(null) },
+			modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+		) {
+			Icon(WonderIcons.Extension, contentDescription = null)
+			Text("Import mod", modifier = Modifier.padding(start = 6.dp))
 		}
 
 		Text(
@@ -82,7 +107,14 @@ fun ProjectsScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 		)
 
 		if (vm.recentProjects.isEmpty()) {
-			Text("Todavía no hay proyectos. Creá uno con \"New\".", color = MaterialTheme.colorScheme.onSurfaceVariant)
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.spacedBy(10.dp),
+				modifier = Modifier.padding(top = 8.dp),
+			) {
+				Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+				Text("No projects yet. Create one with \"New\".", color = MaterialTheme.colorScheme.onSurfaceVariant)
+			}
 		} else {
 			LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
 				items(vm.recentProjects, key = { it.uri }) { recent ->
@@ -114,7 +146,7 @@ fun ProjectsScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 				val name = values.getOrNull(0).orEmpty()
 				val author = values.getOrNull(1).orEmpty()
 				if (name.isBlank()) {
-					dialogError = "El nombre no puede estar vacío"
+					dialogError = "The name can't be empty"
 				} else {
 					vm.createProject(uri, name, author)
 				}
@@ -131,12 +163,15 @@ private fun RecentRow(recent: RecentProject, onOpen: () -> Unit, onRemove: () ->
 		modifier = Modifier
 			.fillMaxWidth()
 			.clickable(onClick = onOpen)
-			.padding(vertical = 10.dp),
+			.padding(vertical = 6.dp),
 	) {
-		Column(Modifier.weight(1f)) {
+		Icon(WonderIcons.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+		Column(Modifier.weight(1f).padding(start = 12.dp)) {
 			Text(recent.name, style = MaterialTheme.typography.bodyLarge)
 			Text(recent.uri, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 		}
-		TextButton(onClick = onRemove) { Text("Remove") }
+		IconButton(onClick = onRemove) {
+			Icon(Icons.Default.Delete, contentDescription = "Remove")
+		}
 	}
 }

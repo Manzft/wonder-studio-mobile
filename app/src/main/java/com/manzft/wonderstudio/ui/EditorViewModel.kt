@@ -95,7 +95,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 			val root = DocumentFile.fromTreeUri(getApplication(), uri)
 			val loaded = root?.let { withContext(Dispatchers.IO) { repository.openProject(it) } }
 			if (loaded == null) {
-				statusMessage = "No se pudo abrir el proyecto (falta project.json)"
+				statusMessage = "Couldn't open the project (project.json is missing)"
 				return@launch
 			}
 			project = loaded
@@ -110,7 +110,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 			val root = DocumentFile.fromTreeUri(getApplication(), uri)
 			val created = root?.let { withContext(Dispatchers.IO) { repository.createProject(it, name, author) } }
 			if (created == null) {
-				statusMessage = "No se pudo crear el proyecto"
+				statusMessage = "Couldn't create the project"
 				return@launch
 			}
 			project = created
@@ -147,11 +147,11 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 		viewModelScope.launch {
 			val ok = withContext(Dispatchers.IO) { repository.save() }
 			statusMessage = if (repository.modLoaded) {
-				"No se guarda mientras hay un mod importado"
+				"Saving is disabled while a mod is loaded"
 			} else if (ok) {
-				"Proyecto guardado"
+				"Project saved"
 			} else {
-				"No se pudo guardar"
+				"Couldn't save"
 			}
 		}
 	}
@@ -477,9 +477,9 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 			if (ok) {
 				project = repository.project
 				afterProjectOpened()
-				statusMessage = "Mod importado (no se puede guardar hasta abrir otro proyecto)"
+				statusMessage = "Mod imported (saving disabled until you open another project)"
 			} else {
-				statusMessage = "El mod no es un proyecto válido"
+				statusMessage = "The mod is not a valid project"
 			}
 		}
 	}
@@ -512,7 +512,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 					repository.export(it, ProjectRepository.ExportSelection(everything, exportSelection))
 				}
 			} ?: false
-			statusMessage = if (ok) "Mod exportado" else "No se pudo exportar"
+			statusMessage = if (ok) "Mod exported" else "Couldn't export"
 		}
 	}
 
@@ -521,12 +521,12 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 	fun launchTest() {
 		val uri = projectUri()
 		if (uri == null) {
-			statusMessage = "Abrí un proyecto primero"
+			statusMessage = "Open a project first"
 			return
 		}
 		val packageName = config.testPackage
 		if (!RunLauncher.isInstalled(getApplication(), packageName)) {
-			statusMessage = "Wonder Maker ($packageName) no está instalado"
+			statusMessage = "Wonder Maker ($packageName) is not installed"
 			return
 		}
 		udpReceiver.start()
@@ -535,7 +535,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 			running = true
 			logs.clear()
 		} else {
-			statusMessage = "No se pudo lanzar Wonder Maker"
+			statusMessage = "Couldn't launch Wonder Maker"
 		}
 	}
 

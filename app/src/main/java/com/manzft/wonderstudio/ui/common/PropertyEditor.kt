@@ -1,5 +1,6 @@
 package com.manzft.wonderstudio.ui.common
 
+import com.manzft.wonderstudio.ui.icons.WonderIcons
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -145,7 +147,10 @@ fun PropertyEditor(
 							.replaceFirstChar { it.uppercase() },
 						modifier = Modifier.weight(1f),
 					)
-					TextButton(onClick = { optionTarget = field }) { Text("Choose") }
+					TextButton(onClick = { optionTarget = field }) {
+						Icon(Icons.Default.List, contentDescription = null)
+						Text("Choose", modifier = Modifier.padding(start = 6.dp))
+					}
 				}
 			}
 		}
@@ -222,6 +227,9 @@ private fun PathRow(value: String, onChoose: () -> Unit, onPlay: () -> Unit) {
 				Icon(Icons.Default.PlayArrow, contentDescription = "Play")
 			}
 		}
-		TextButton(onClick = onChoose) { Text("Choose") }
+		TextButton(onClick = onChoose) {
+			Icon(WonderIcons.FolderOpen, contentDescription = null)
+			Text("Choose", modifier = Modifier.padding(start = 6.dp))
+		}
 	}
 }
