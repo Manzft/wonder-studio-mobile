@@ -49,6 +49,6 @@ class AppConfig(context: Context) {
 		private const val KEY_RECENTS = "recent_projects"
 		private const val KEY_LAST_PROJECT = "last_project"
 		private const val KEY_TEST_PACKAGE = "test_package"
-		const val DEFAULT_TEST_PACKAGE = "com.manzft.wondermaker"
+		const val DEFAULT_TEST_PACKAGE = "com.Manzft.wondermaker"
 	}
 }
