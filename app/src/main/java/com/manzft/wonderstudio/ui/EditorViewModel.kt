@@ -90,27 +90,34 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
 	val modLoaded: Boolean get() = repository.modLoaded
 
-	fun openProject(uri: Uri): Boolean {
-		val root = DocumentFile.fromTreeUri(getApplication(), uri) ?: return false
-		val loaded = repository.openProject(root) ?: run {
-			statusMessage = "No se pudo abrir el proyecto (falta project.json)"
-			return false
+	fun openProject(uri: Uri) {
+		viewModelScope.launch {
+			val root = DocumentFile.fromTreeUri(getApplication(), uri)
+			val loaded = root?.let { withContext(Dispatchers.IO) { repository.openProject(it) } }
+			if (loaded == null) {
+				statusMessage = "No se pudo abrir el proyecto (falta project.json)"
+				return@launch
+			}
+			project = loaded
+			config.addRecent(loaded.project_name, uri.toString())
+			config.lastProjectUri = uri.toString()
+			afterProjectOpened()
 		}
-		project = loaded
-		config.addRecent(loaded.project_name, uri.toString())
-		config.lastProjectUri = uri.toString()
-		afterProjectOpened()
-		return true
 	}
 
-	fun createProject(uri: Uri, name: String, author: String): Boolean {
-		val root = DocumentFile.fromTreeUri(getApplication(), uri) ?: return false
-		val created = repository.createProject(root, name, author)
-		project = created
-		config.addRecent(created.project_name, uri.toString())
-		config.lastProjectUri = uri.toString()
-		afterProjectOpened()
-		return true
+	fun createProject(uri: Uri, name: String, author: String) {
+		viewModelScope.launch {
+			val root = DocumentFile.fromTreeUri(getApplication(), uri)
+			val created = root?.let { withContext(Dispatchers.IO) { repository.createProject(it, name, author) } }
+			if (created == null) {
+				statusMessage = "No se pudo crear el proyecto"
+				return@launch
+			}
+			project = created
+			config.addRecent(created.project_name, uri.toString())
+			config.lastProjectUri = uri.toString()
+			afterProjectOpened()
+		}
 	}
 
 	private fun afterProjectOpened() {
@@ -463,17 +470,18 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
 	// ------------------------------------------------------------------ mods
 
-	fun importMod(uri: Uri): Boolean {
-		val root = DocumentFile.fromTreeUri(getApplication(), uri) ?: return false
-		val ok = repository.importMod(root)
-		if (ok) {
-			project = repository.project
-			afterProjectOpened()
-			statusMessage = "Mod importado (no se puede guardar hasta abrir otro proyecto)"
-		} else {
-			statusMessage = "El mod no es un proyecto válido"
+	fun importMod(uri: Uri) {
+		viewModelScope.launch {
+			val root = DocumentFile.fromTreeUri(getApplication(), uri)
+			val ok = root?.let { withContext(Dispatchers.IO) { repository.importMod(it) } } ?: false
+			if (ok) {
+				project = repository.project
+				afterProjectOpened()
+				statusMessage = "Mod importado (no se puede guardar hasta abrir otro proyecto)"
+			} else {
+				statusMessage = "El mod no es un proyecto válido"
+			}
 		}
-		return ok
 	}
 
 	fun clearMod() = repository.clearMod()
@@ -496,11 +504,16 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 		exportSelection = exportSelection + (style to updated)
 	}
 
-	fun exportMod(uri: Uri, everything: Boolean): Boolean {
-		val root = DocumentFile.fromTreeUri(getApplication(), uri) ?: return false
-		val ok = repository.export(root, ProjectRepository.ExportSelection(everything, exportSelection))
-		statusMessage = if (ok) "Mod exportado" else "No se pudo exportar"
-		return ok
+	fun exportMod(uri: Uri, everything: Boolean) {
+		viewModelScope.launch {
+			val root = DocumentFile.fromTreeUri(getApplication(), uri)
+			val ok = root?.let {
+				withContext(Dispatchers.IO) {
+					repository.export(it, ProjectRepository.ExportSelection(everything, exportSelection))
+				}
+			} ?: false
+			statusMessage = if (ok) "Mod exportado" else "No se pudo exportar"
+		}
 	}
 
 	// ------------------------------------------------------------------ test
