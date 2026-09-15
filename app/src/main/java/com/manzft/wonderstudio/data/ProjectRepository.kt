@@ -283,7 +283,6 @@ class ProjectRepository(private val context: Context) {
 	fun export(target: DocumentFile, selection: ExportSelection): Boolean {
 		val current = project ?: return false
 		Saf.ensureDir(target, "assets")
-		Saf.ensureDir(target, "sourcecode/styles")
 		writeProjectJson(target, current)
 
 		val referencedAssets = linkedSetOf<String>()
