@@ -74,10 +74,15 @@ private fun nameOf(field: PropertyField): String? = when (field) {
 	else -> null
 }
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun PropertyEditor(
 	fields: List<PropertyField>,
 	settings: Settings,
+	// Cambia con cada mutación del proyecto: fuerza la recomposición del
+	// editor (si no, Compose lo saltea con "strong skipping" porque el mapa de
+	// settings es la misma instancia y no lee ningún estado).
+	revision: Int,
 	assets: AssetRepository,
 	repository: ProjectRepository,
 	onChanged: (String, Setting) -> Unit,

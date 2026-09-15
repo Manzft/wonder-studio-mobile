@@ -200,6 +200,7 @@ fun InspectorPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 				PropertyEditor(
 					fields = PropertySpecs.style,
 					settings = style.settings,
+					revision = vm.revision,
 					assets = vm.assets,
 					repository = vm.repository,
 					onChanged = { key, value -> vm.updateStyleSetting(key, value) },
@@ -212,6 +213,7 @@ fun InspectorPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 				PropertyEditor(
 					fields = PropertySpecs.forElementRoot(elementType),
 					settings = element.settings,
+					revision = vm.revision,
 					assets = vm.assets,
 					repository = vm.repository,
 					onChanged = { key, value -> vm.updateElementSetting(key, value) },
@@ -224,6 +226,7 @@ fun InspectorPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 				PropertyEditor(
 					fields = PropertySpecs.forComponent(component.type),
 					settings = component.settings,
+					revision = vm.revision,
 					assets = vm.assets,
 					repository = vm.repository,
 					onChanged = { key, value -> vm.updateComponentSetting(component, key, value) },
@@ -294,6 +297,7 @@ fun AnimationsPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 			PropertyEditor(
 				fields = PropertySpecs.animation,
 				settings = animation.settings,
+				revision = vm.revision,
 				assets = vm.assets,
 				repository = vm.repository,
 				onChanged = { key, value -> vm.updateAnimationSetting(component, animation, key, value) },
@@ -345,6 +349,8 @@ fun AnimationsPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 
 @Composable
 private fun AnimationPreview(vm: EditorViewModel, animation: Animation) {
+	@Suppress("UNUSED_VARIABLE")
+	val revision = vm.revision
 	val path = animation.settings.string("texture")
 	val bitmap by produceState<Bitmap?>(null, path) {
 		value = withContext(Dispatchers.IO) { vm.assets.bitmap(path) }
