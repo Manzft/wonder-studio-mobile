@@ -120,7 +120,6 @@ fun PropertyEditor(
 					verticalAlignment = Alignment.CenterVertically,
 					modifier = Modifier.fillMaxWidth(),
 				) {
-					Text("Value", modifier = Modifier.width(72.dp))
 					Switch(
 						checked = currentSetting(values, field).asBool,
 						onCheckedChange = { onChanged(field.name, Setting.switch(it)) },
