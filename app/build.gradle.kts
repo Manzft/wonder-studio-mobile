@@ -26,6 +26,14 @@ android {
 	}
 
 	signingConfigs {
+		// Debug con un keystore fijo del repo: builds locales y de CI comparten
+		// la misma firma, así `adb install -r` actualiza sin desinstalar.
+		create("debugFixed") {
+			storeFile = rootProject.file("keystore/debug.keystore")
+			storePassword = "android"
+			keyAlias = "androiddebugkey"
+			keyPassword = "android"
+		}
 		create("release") {
 			if (keystoreProperties.getProperty("storeFile") != null) {
 				storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
@@ -38,11 +46,7 @@ android {
 
 	buildTypes {
 		debug {
-			// Firmar el debug con la misma clave que release: permite
-			// `adb install -r` sobre cualquiera de las dos builds (iterar rápido).
-			if (keystoreProperties.getProperty("storeFile") != null) {
-				signingConfig = signingConfigs.getByName("release")
-			}
+			signingConfig = signingConfigs.getByName("debugFixed")
 		}
 		release {
 			isMinifyEnabled = true
