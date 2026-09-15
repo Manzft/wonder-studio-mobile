@@ -18,7 +18,6 @@ import com.manzft.wonderstudio.data.AssetRepository
 import com.manzft.wonderstudio.data.ProjectRepository
 import com.manzft.wonderstudio.data.RecentProject
 import com.manzft.wonderstudio.data.RunLauncher
-import com.manzft.wonderstudio.data.Saf
 import com.manzft.wonderstudio.model.Animation
 import com.manzft.wonderstudio.model.Component
 import com.manzft.wonderstudio.model.Defaults
@@ -622,26 +621,15 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 	// ------------------------------------------------------------------ test
 
 	fun launchTest() {
-		val root = repository.projectRoot
-		if (root == null) {
-			statusMessage = "Open a project first"
-			return
-		}
 		val packageName = config.testPackage
 		if (!RunLauncher.isInstalled(getApplication(), packageName)) {
 			statusMessage = "Wonder Maker ($packageName) is not installed"
 			return
 		}
-		// Wonder Maker lee el proyecto en el lugar: necesita la ruta real y el
-		// permiso "All files access".
-		val projectPath = Saf.treeUriToPath(root.uri)
-		if (projectPath == null) {
-			statusMessage = "This folder can't be read by Wonder Maker (use local storage)"
-			return
-		}
-		val modPath = repository.modRoot?.let { Saf.treeUriToPath(it.uri) }
+		// El proyecto se prueba poniéndolo en la carpeta "mods" de Wonder Maker,
+		// que el juego carga solo al abrir.
 		udpReceiver.start()
-		val ok = RunLauncher.launch(getApplication(), packageName, projectPath, modPath)
+		val ok = RunLauncher.launch(getApplication(), packageName)
 		if (ok) {
 			running = true
 			logs.clear()
