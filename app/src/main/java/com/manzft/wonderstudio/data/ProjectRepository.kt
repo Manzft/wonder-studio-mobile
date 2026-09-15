@@ -349,4 +349,38 @@ class ProjectRepository(private val context: Context) {
 		val fileName = parts.last()
 		Saf.createOrReplaceBinary(context, dir, fileName, Saf.mimeFor(fileName), source)
 	}
+
+	// ------------------------------------------------------------------ sync
+
+	// Borra TODO el contenido del proyecto y lo reemplaza por el de un .zip de
+	// GitHub (archivo de una rama). El zip trae una carpeta raíz (p. ej.
+	// "wonder-maker-fangame-main/") que se descarta al extraer.
+	fun replaceAll(root: DocumentFile, input: java.io.InputStream, onProgress: (String) -> Unit = {}): Boolean {
+		for (child in root.listFiles()) Saf.deleteRecursive(child)
+		java.util.zip.ZipInputStream(input).use { zip ->
+			var entry = zip.nextEntry
+			while (entry != null) {
+				val relative = entry.name.substringAfter('/', "")
+				if (relative.isNotEmpty()) {
+					if (entry.isDirectory) {
+						Saf.ensureDirs(root, relative)
+					} else {
+						val dir = relative.substringBeforeLast('/', "")
+						val fileName = relative.substringAfterLast('/')
+						val parent = if (dir.isEmpty()) root else Saf.ensureDirs(root, dir)
+						if (parent != null) {
+							val file = Saf.child(parent, fileName) ?: parent.createFile(Saf.mimeFor(fileName), fileName)
+							if (file != null) {
+								context.contentResolver.openOutputStream(file.uri, "wt")?.use { out -> zip.copyTo(out) }
+							}
+						}
+					}
+					onProgress(relative)
+				}
+				zip.closeEntry()
+				entry = zip.nextEntry
+			}
+		}
+		return true
+	}
 }

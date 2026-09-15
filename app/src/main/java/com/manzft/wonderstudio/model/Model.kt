@@ -151,7 +151,7 @@ data class Project(
 // ---------------------------------------------------------------------------
 
 object Defaults {
-	const val ENGINE_VERSION = "1.0"
+	const val ENGINE_VERSION = "Preview4"
 
 	const val DEFAULT_SCRIPT = "create()\n\nend\n\nstart()\n\nend\n\nframe()\n\nend\n"
 

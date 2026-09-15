@@ -60,7 +60,7 @@ fun defaultSetting(field: PropertyField): Setting = when (field) {
 	else -> Setting.text("")
 }
 
-private fun currentSetting(settings: Settings, field: PropertyField): Setting {
+private fun currentSetting(settings: Map<String, Setting>, field: PropertyField): Setting {
 	val name = nameOf(field) ?: return Setting.text("")
 	return settings[name] ?: defaultSetting(field)
 }
@@ -74,7 +74,6 @@ private fun nameOf(field: PropertyField): String? = when (field) {
 	else -> null
 }
 
-@Suppress("UNUSED_PARAMETER")
 @Composable
 fun PropertyEditor(
 	fields: List<PropertyField>,
@@ -91,6 +90,10 @@ fun PropertyEditor(
 ) {
 	var assetTarget by remember { mutableStateOf<PathField?>(null) }
 	var optionTarget by remember { mutableStateOf<OptionField?>(null) }
+	// Copia observable de los settings: se recalcula cuando cambia la revision,
+	// así la UI refleja las mutaciones del modelo (el mapa en sí no es
+	// observable por Compose).
+	val values = remember(revision) { settings.toMap() }
 
 	Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
 		fields.forEach { field ->
@@ -109,7 +112,7 @@ fun PropertyEditor(
 					modifier = Modifier.padding(top = 6.dp),
 				)
 
-				is NumberField -> NumberRow(field, currentSetting(settings, field)) { value ->
+				is NumberField -> NumberRow(field, currentSetting(values, field)) { value ->
 					onChanged(field.name, Setting.number(value, field.integer))
 				}
 
@@ -119,19 +122,19 @@ fun PropertyEditor(
 				) {
 					Text("Value", modifier = Modifier.width(72.dp))
 					Switch(
-						checked = currentSetting(settings, field).asBool,
+						checked = currentSetting(values, field).asBool,
 						onCheckedChange = { onChanged(field.name, Setting.switch(it)) },
 					)
 				}
 
 				is PathField -> PathRow(
-					value = currentSetting(settings, field).asString,
+					value = currentSetting(values, field).asString,
 					onChoose = { assetTarget = field },
-					onPlay = { onPlaySound(currentSetting(settings, field).asString) },
+					onPlay = { onPlaySound(currentSetting(values, field).asString) },
 				)
 
 				is TextField -> {
-					var text by remember(field.name) { mutableStateOf(currentSetting(settings, field).asString) }
+					var text by remember(field.name) { mutableStateOf(currentSetting(values, field).asString) }
 					OutlinedTextField(
 						value = text,
 						onValueChange = {
@@ -148,7 +151,7 @@ fun PropertyEditor(
 					modifier = Modifier.fillMaxWidth(),
 				) {
 					Text(
-						text = currentSetting(settings, field).asString.ifEmpty { field.options.firstOrNull() ?: "" }
+						text = currentSetting(values, field).asString.ifEmpty { field.options.firstOrNull() ?: "" }
 							.replaceFirstChar { it.uppercase() },
 						modifier = Modifier.weight(1f),
 					)

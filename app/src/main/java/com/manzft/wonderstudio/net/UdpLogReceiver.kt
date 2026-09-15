@@ -53,6 +53,6 @@ class UdpLogReceiver(private val onLine: (String) -> Unit) {
 		const val LOG_PORT = 9174
 		private const val BUFFER_SIZE = 8192
 		private const val CONTROL_PREFIX = "@@hello"
-		private const val ENGINE_VERSION = "1.0"
+		private const val ENGINE_VERSION = "Preview4"
 	}
 }

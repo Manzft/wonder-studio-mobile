@@ -74,6 +74,9 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 	var running: Boolean by mutableStateOf(false)
 		private set
 
+	var syncing: Boolean by mutableStateOf(false)
+		private set
+
 	val logs = mutableStateListOf<String>()
 
 	var exportSelection: Map<String, ProjectRepository.StyleSelection> by mutableStateOf(emptyMap())
@@ -486,6 +489,45 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
 	fun clearMod() = repository.clearMod()
 
+	// ---------------------------------------------------------------- sync
+
+	// Descarga la rama main del repo del fangame y reemplaza todo el contenido
+	// del proyecto actual por el del repo.
+	fun downloadMainBranch() {
+		val root = repository.projectRoot
+		if (root == null) {
+			statusMessage = "Open a project first"
+			return
+		}
+		if (syncing) return
+		viewModelScope.launch {
+			syncing = true
+			statusMessage = "Downloading main branch…"
+			val ok = withContext(Dispatchers.IO) {
+				try {
+					val connection = (java.net.URL(FANGAME_MAIN_ZIP).openConnection() as java.net.HttpURLConnection).apply {
+						instanceFollowRedirects = true
+						connectTimeout = 20000
+						readTimeout = 180000
+					}
+					connection.inputStream.use { stream -> repository.replaceAll(root, stream) }
+					true
+				} catch (error: Exception) {
+					false
+				}
+			}
+			if (ok) {
+				val reopened = withContext(Dispatchers.IO) { repository.openProject(root) }
+				project = reopened
+				afterProjectOpened()
+				statusMessage = "Main branch downloaded"
+			} else {
+				statusMessage = "Download failed"
+			}
+			syncing = false
+		}
+	}
+
 	// ---------------------------------------------------------------- export
 
 	fun toggleExportSelection(style: String, type: ElementType, name: String) {
@@ -561,5 +603,9 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 		super.onCleared()
 		udpReceiver.stop()
 		audio.release()
+	}
+
+	companion object {
+		const val FANGAME_MAIN_ZIP = "https://github.com/Manzft/wonder-maker-fangame/archive/refs/heads/main.zip"
 	}
 }

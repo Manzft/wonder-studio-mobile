@@ -73,6 +73,12 @@ fun ProjectsScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 			"Create Wonder Maker projects right from your phone.",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
+			modifier = Modifier.padding(bottom = 4.dp),
+		)
+		Text(
+			"Engine ${com.manzft.wonderstudio.model.Defaults.ENGINE_VERSION}",
+			style = MaterialTheme.typography.labelSmall,
+			color = MaterialTheme.colorScheme.tertiary,
 			modifier = Modifier.padding(bottom = 16.dp),
 		)
 

@@ -28,7 +28,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -255,6 +257,7 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 	var showStyleAdd by remember { mutableStateOf(false) }
 	var styleRename by remember { mutableStateOf<String?>(null) }
 	var styleRemove by remember { mutableStateOf<String?>(null) }
+	var showDownload by remember { mutableStateOf(false) }
 	val selectedStyle = vm.currentStyleName
 	val style = vm.currentStyle
 
@@ -264,6 +267,11 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 			"by ${project?.author_name.orEmpty()} · v${project?.project_version.orEmpty()}",
 			style = MaterialTheme.typography.labelSmall,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
+		)
+		Text(
+			"Wonder Studio Engine ${com.manzft.wonderstudio.model.Defaults.ENGINE_VERSION}",
+			style = MaterialTheme.typography.labelSmall,
+			color = MaterialTheme.colorScheme.tertiary,
 		)
 		if (vm.modLoaded) {
 			Text("Mod imported (saving disabled)", color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.labelSmall)
@@ -313,6 +321,19 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 			}
 			vm.currentElementType?.let { type -> ElementList(vm, type, onAction) }
 		}
+
+		SectionHeader("Repository")
+		Button(
+			onClick = { showDownload = true },
+			enabled = !vm.syncing,
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			Icon(WonderIcons.Download, contentDescription = null)
+			Text(if (vm.syncing) "Downloading…" else "Download main branch", modifier = Modifier.padding(start = 8.dp))
+		}
+		if (vm.syncing) {
+			CircularProgressIndicator(modifier = Modifier.padding(top = 8.dp))
+		}
 	}
 
 	if (showStyleAdd) {
@@ -357,6 +378,17 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 				},
 			)
 		}
+	}
+	if (showDownload) {
+		ConfirmDialog(
+			title = "Download main branch",
+			message = "This DELETES everything in the current project and replaces it with the main branch of wonder-maker-fangame. Continue?",
+			onDismiss = { showDownload = false },
+			onConfirm = {
+				showDownload = false
+				vm.downloadMainBranch()
+			},
+		)
 	}
 }
 

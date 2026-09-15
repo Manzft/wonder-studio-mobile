@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
 
 // Iconos materiales vendorizados (subset de @material-design-icons/svg, Apache-2.0).
-// Se generan acá para no depender de material-icons-extended (~35 MB) y acelerar el build/R8.
+// Se generan aca para no depender de material-icons-extended (~35 MB) y acelerar el build/R8.
 object WonderIcons {
 
 	val AccountTree: ImageVector by lazy { build("AccountTree", listOf(VPath("M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z", false))) }
@@ -32,24 +32,15 @@ object WonderIcons {
 	val ZoomIn: ImageVector by lazy { build("ZoomIn", listOf(VPath("M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z", false), VPath("M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z", false))) }
 	val ZoomOut: ImageVector by lazy { build("ZoomOut", listOf(VPath("M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z", false))) }
 	val Extension: ImageVector by lazy { build("Extension", listOf(VPath("M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z", false))) }
+	val Download: ImageVector by lazy { build("Download", listOf(VPath("M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z", false))) }
 }
 
 private data class VPath(val d: String, val evenOdd: Boolean)
 
 private fun build(name: String, paths: List<VPath>): ImageVector {
-	val builder = ImageVector.Builder(
-		name = name,
-		defaultWidth = 24.dp,
-		defaultHeight = 24.dp,
-		viewportWidth = 24f,
-		viewportHeight = 24f,
-	)
+	val builder = ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
 	for (p in paths) {
-		builder.addPath(
-			pathData = addPathNodes(p.d),
-			pathFillType = if (p.evenOdd) PathFillType.EvenOdd else PathFillType.NonZero,
-			fill = SolidColor(Color.Black),
-		)
+		builder.addPath(pathData = addPathNodes(p.d), pathFillType = if (p.evenOdd) PathFillType.EvenOdd else PathFillType.NonZero, fill = SolidColor(Color.Black))
 	}
 	return builder.build()
 }
