@@ -4,7 +4,7 @@ build/
 local.properties
 *.keystore
 *.jks
-!.keystore/debug.keystore
+!keystore/debug.keystore
 .idea/
 *.iml
 .DS_Store
