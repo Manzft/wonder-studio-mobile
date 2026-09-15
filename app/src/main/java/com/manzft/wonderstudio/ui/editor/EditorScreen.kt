@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
@@ -153,6 +154,11 @@ fun EditorScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 								text = { Text("Export mod") },
 								leadingIcon = { Icon(WonderIcons.Upload, contentDescription = null) },
 								onClick = { menuOpen = false; showExport = true },
+							)
+							DropdownMenuItem(
+								text = { Text("Grant Wonder Maker file access") },
+								leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+								onClick = { menuOpen = false; vm.grantWonderMakerFileAccess() },
 							)
 							DropdownMenuItem(
 								text = { Text("Output logs") },

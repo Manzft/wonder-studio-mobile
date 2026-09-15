@@ -72,4 +72,21 @@ object Saf {
 		"json" -> "application/json"
 		else -> "application/octet-stream"
 	}
+
+	// Convierte una URI de árbol del almacenamiento externo a la ruta real del
+	// filesystem (p. ej. primary:Documents/wm -> /storage/emulated/0/Documents/wm).
+	// Devuelve null si no es un árbol del almacenamiento local.
+	fun treeUriToPath(uri: Uri?): String? {
+		if (uri == null) return null
+		if (uri.authority != "com.android.externalstorage.documents") return null
+		val documentId = try {
+			android.provider.DocumentsContract.getTreeDocumentId(uri)
+		} catch (_: Exception) {
+			null
+		} ?: return null
+		val parts = documentId.split(":", limit = 2)
+		if (parts.size != 2) return null
+		val volume = if (parts[0].equals("primary", ignoreCase = true)) "emulated/0" else parts[0]
+		return "/storage/$volume/${parts[1].trim('/')}"
+	}
 }
