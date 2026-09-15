@@ -76,7 +76,7 @@ fun ProjectsScreen(vm: EditorViewModel, modifier: Modifier = Modifier) {
 			modifier = Modifier.padding(bottom = 4.dp),
 		)
 		Text(
-			"Engine ${com.manzft.wonderstudio.model.Defaults.ENGINE_VERSION}",
+			"Wonder Studio ${com.manzft.wonderstudio.model.Defaults.ENGINE_VERSION}",
 			style = MaterialTheme.typography.labelSmall,
 			color = MaterialTheme.colorScheme.tertiary,
 			modifier = Modifier.padding(bottom = 16.dp),

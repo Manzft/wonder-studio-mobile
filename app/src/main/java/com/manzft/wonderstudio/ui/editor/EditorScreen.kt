@@ -37,6 +37,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -60,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.manzft.wonderstudio.model.Element
 import com.manzft.wonderstudio.model.ElementType
@@ -258,18 +260,28 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 	var styleRename by remember { mutableStateOf<String?>(null) }
 	var styleRemove by remember { mutableStateOf<String?>(null) }
 	var showDownload by remember { mutableStateOf(false) }
+	var showSettings by remember { mutableStateOf(false) }
 	val selectedStyle = vm.currentStyleName
 	val style = vm.currentStyle
 
 	Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
-		Text(project?.project_name ?: "", style = MaterialTheme.typography.titleLarge)
+		Row(verticalAlignment = Alignment.CenterVertically) {
+			Text(
+				project?.project_name ?: "",
+				style = MaterialTheme.typography.titleLarge,
+				modifier = Modifier.weight(1f),
+			)
+			IconButton(onClick = { showSettings = true }) {
+				Icon(Icons.Default.Edit, contentDescription = "Project settings")
+			}
+		}
 		Text(
 			"by ${project?.author_name.orEmpty()} · v${project?.project_version.orEmpty()}",
 			style = MaterialTheme.typography.labelSmall,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 		)
 		Text(
-			"Wonder Studio Engine ${com.manzft.wonderstudio.model.Defaults.ENGINE_VERSION}",
+			"Wonder Studio ${com.manzft.wonderstudio.model.Defaults.ENGINE_VERSION}",
 			style = MaterialTheme.typography.labelSmall,
 			color = MaterialTheme.colorScheme.tertiary,
 		)
@@ -332,7 +344,7 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 			Text(if (vm.syncing) "Downloading…" else "Download main branch", modifier = Modifier.padding(start = 8.dp))
 		}
 		if (vm.syncing) {
-			CircularProgressIndicator(modifier = Modifier.padding(top = 8.dp))
+			DownloadProgress(vm)
 		}
 	}
 
@@ -389,6 +401,26 @@ private fun ProjectDrawer(vm: EditorViewModel, onAction: () -> Unit) {
 				vm.downloadMainBranch()
 			},
 		)
+	}
+	if (showSettings) {
+		val current = project
+		if (current != null) {
+			FieldsDialog(
+				title = "Project settings",
+				message = "Edit the project info",
+				labels = listOf("Project name", "Author", "Version"),
+				initial = listOf(current.project_name, current.author_name, current.project_version),
+				onDismiss = { showSettings = false },
+				onConfirm = { values ->
+					vm.updateProjectSettings(
+						values.getOrNull(0).orEmpty(),
+						values.getOrNull(1).orEmpty(),
+						values.getOrNull(2).orEmpty(),
+					)
+					showSettings = false
+				},
+			)
+		}
 	}
 }
 
@@ -559,3 +591,55 @@ private fun LogsDialog(vm: EditorViewModel, onDismiss: () -> Unit) {
 		},
 	)
 }
+
+// ---------------------------------------------------------------------------
+// Descarga de la rama principal
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun DownloadProgress(vm: EditorViewModel) {
+	Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+		if (vm.downloadProgress >= 0f) {
+			LinearProgressIndicator(progress = { vm.downloadProgress }, modifier = Modifier.fillMaxWidth())
+		} else {
+			LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+		}
+		val percent = if (vm.downloadProgress >= 0f) "${(vm.downloadProgress * 100).toInt()}%" else "…"
+		val sizes = if (vm.downloadTotal > 0) {
+			"${formatBytes(vm.downloadBytes)} / ${formatBytes(vm.downloadTotal)}"
+		} else {
+			formatBytes(vm.downloadBytes)
+		}
+		val speed = if (vm.downloadSpeed > 0f) " · ${formatBytes(vm.downloadSpeed.toLong())}/s" else ""
+		val eta = if (vm.downloadEta >= 0) " · ETA ${formatEta(vm.downloadEta)}" else ""
+		Text(
+			"$percent · $sizes$speed$eta",
+			style = MaterialTheme.typography.labelMedium,
+			modifier = Modifier.padding(top = 8.dp),
+		)
+		if (vm.downloadFile.isNotEmpty()) {
+			Text(
+				vm.downloadFile,
+				style = MaterialTheme.typography.labelSmall,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis,
+			)
+		}
+	}
+}
+
+private fun formatBytes(bytes: Long): String {
+	val kb = 1024.0
+	val mb = kb * 1024.0
+	val gb = mb * 1024.0
+	return when {
+		bytes >= gb -> String.format(java.util.Locale.US, "%.2f GB", bytes / gb)
+		bytes >= mb -> String.format(java.util.Locale.US, "%.1f MB", bytes / mb)
+		bytes >= kb -> String.format(java.util.Locale.US, "%.0f KB", bytes / kb)
+		else -> "$bytes B"
+	}
+}
+
+private fun formatEta(seconds: Long): String =
+	if (seconds >= 60) "${seconds / 60}m ${seconds % 60}s" else "${seconds}s"

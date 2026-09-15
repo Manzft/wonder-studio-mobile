@@ -3,7 +3,9 @@ package com.manzft.wonderstudio.ui
 import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -75,6 +77,20 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 		private set
 
 	var syncing: Boolean by mutableStateOf(false)
+		private set
+
+	// Progreso de la descarga de la rama principal
+	var downloadProgress: Float by mutableFloatStateOf(-1f)
+		private set
+	var downloadBytes: Long by mutableLongStateOf(0L)
+		private set
+	var downloadTotal: Long by mutableLongStateOf(-1L)
+		private set
+	var downloadSpeed: Float by mutableFloatStateOf(0f)
+		private set
+	var downloadEta: Long by mutableLongStateOf(-1L)
+		private set
+	var downloadFile: String by mutableStateOf("")
 		private set
 
 	val logs = mutableStateListOf<String>()
@@ -157,6 +173,14 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 				"Couldn't save"
 			}
 		}
+	}
+
+	fun updateProjectSettings(name: String, author: String, version: String) {
+		val current = project ?: return
+		current.project_name = name
+		current.author_name = author
+		current.project_version = version
+		touch()
 	}
 
 	fun projectUri(): Uri? = repository.projectRoot?.uri
@@ -492,7 +516,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 	// ---------------------------------------------------------------- sync
 
 	// Descarga la rama main del repo del fangame y reemplaza todo el contenido
-	// del proyecto actual por el del repo.
+	// del proyecto actual por el del repo. Reporta progreso, velocidad y ETA.
 	fun downloadMainBranch() {
 		val root = repository.projectRoot
 		if (root == null) {
@@ -502,6 +526,12 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 		if (syncing) return
 		viewModelScope.launch {
 			syncing = true
+			downloadProgress = -1f
+			downloadBytes = 0L
+			downloadTotal = -1L
+			downloadSpeed = 0f
+			downloadEta = -1L
+			downloadFile = ""
 			statusMessage = "Downloading main branch…"
 			val ok = withContext(Dispatchers.IO) {
 				try {
@@ -510,7 +540,33 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 						connectTimeout = 20000
 						readTimeout = 180000
 					}
-					connection.inputStream.use { stream -> repository.replaceAll(root, stream) }
+					val total = connection.contentLengthLong.takeIf { it > 0 } ?: -1L
+					downloadTotal = total
+					val start = System.currentTimeMillis()
+					var readBytes = 0L
+					var lastUpdate = 0L
+					val counting = object : java.io.FilterInputStream(connection.inputStream) {
+						override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+							val count = super.read(buffer, offset, length)
+							if (count > 0) {
+								readBytes += count
+								val now = System.currentTimeMillis()
+								if (now - lastUpdate >= 250) {
+									lastUpdate = now
+									val seconds = ((now - start) / 1000.0).coerceAtLeast(0.001)
+									val speed = (readBytes / seconds).toFloat()
+									downloadBytes = readBytes
+									downloadSpeed = speed
+									downloadProgress = if (total > 0) (readBytes.toFloat() / total).coerceIn(0f, 1f) else -1f
+									downloadEta = if (total > 0 && speed > 0f) (((total - readBytes) / speed).toLong()) else -1L
+								}
+							}
+							return count
+						}
+					}
+					counting.use { stream ->
+						repository.replaceAll(root, stream) { name -> downloadFile = name }
+					}
 					true
 				} catch (error: Exception) {
 					false
@@ -524,6 +580,10 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 			} else {
 				statusMessage = "Download failed"
 			}
+			downloadProgress = -1f
+			downloadSpeed = 0f
+			downloadEta = -1L
+			downloadFile = ""
 			syncing = false
 		}
 	}
